@@ -1552,11 +1552,54 @@ async def _error_handler(update, context):
 
 
 # ==============================================================================
-#  MAIN — NO EVENT LOOP 
+#  MAIN — NO EVENT LOOP (Render Web Service Port Fix + Proxy Fetcher)
 # ==============================================================================
 
 def main():
     ensure_files_exist()
+
+    # 🌟 ၁။ Render Web Service အတွက် Port binding error ကျော်ရန် ဟန်ပြ Web Server ဖွင့်ခြင်း စနစ်
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    class HealthCheckHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+        def log_message(self, format, *args):
+            return
+
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    print(bgreen + f"[Render-Fix] Dummy health check server started on port {port}" + reset)
+
+    # 🌟 ၂။ ပုံထဲကအတိုင်း Proxy Source API Links များမှ Auto Fetch လုပ်ပြီး proxies.txt ထဲသို့ ထည့်ပေးခြင်း
+    try:
+        import requests
+        print("[ProxyFetcher] Fetching proxies from online sources...")
+        all_online_proxies = set()
+        sources = [
+            "https://githubusercontent.com",
+            "https://githubusercontent.com",
+            "https://githubusercontent.com",
+            "https://githubusercontent.com"
+        ]
+        for url in sources:
+            try:
+                r = requests.get(url, timeout=4)
+                if r.status_code == 200:
+                    for line in r.text.splitlines():
+                        if ":" in line:
+                            all_online_proxies.add(line.strip())
+            except:
+                pass
+        if all_online_proxies:
+            with open(PROXY_FILE, "w") as f:
+                f.write("\n".join(all_online_proxies) + "\n")
+            print(bgreen + f"[ProxyFetcher] Auto-Fetched & Saved {len(all_online_proxies)} proxies." + reset)
+    except Exception as e:
+        print(bred + f"[ProxyFetcher] Error: {e}" + reset)
 
     try:
         from telegram.request import HTTPXRequest
@@ -1585,6 +1628,7 @@ def main():
     app.post_init = _post_init
 
     pm = get_proxy_manager()
+    pm.load() # Fetch ပြီးသား proxy တွေကို ပြန် load လုပ်ခိုင်းခြင်း
     print(bgreen + f"[MAIN] Proxies: {pm.get_active_count()}" + reset)
     print(bgreen + f"[MAIN] ⚡ NUM_WORKERS: {NUM_WORKERS}" + reset)
     print(bgreen + f"[MAIN] 💾 State: {STATE_FILE}" + reset)
