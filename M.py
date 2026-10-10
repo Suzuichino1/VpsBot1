@@ -140,8 +140,8 @@ class ProxyManager:
             connector = ProxyConnector.from_url(proxy, ssl=False)
             async with aiohttp.ClientSession(connector=connector) as session:
                 async with session.get("https://ruijienetworks.com", timeout=4) as resp:
-                if resp.status not in[200, 201, 204, 301, 302]:
-                    await self.mark_bad(proxy)
+                    if resp.status not in:
+                        await self.mark_bad(proxy)
         except:
             await self.mark_bad(proxy)
 
