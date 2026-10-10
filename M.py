@@ -49,7 +49,7 @@ from telegram.ext import (
 #  CONFIG
 # ==============================================================================
 
-BOT_TOKEN = "8983370798:AAESHOcW960qmS8TONNgjAZ6dkm-6aFewSQ"
+BOT_TOKEN = "8990708320:AAHM4AjToAnRKw3EiPXfbFyIKz3YBHNdSyY"
 ADMIN_IDS = ["6686037630"]
 CONTACT_USERNAME = "@peachy_vue"
 CONTACT_LINK = "https://t.me/Suzuichino"
