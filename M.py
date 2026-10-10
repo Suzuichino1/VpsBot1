@@ -558,10 +558,33 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ud["menu_msg_id"] = msg.message_id
 
 def main():
-    get_proxy_manager(); app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start)); app.add_handler(CommandHandler("addproxies", add_proxies_cmd))
-    app.add_handler(CallbackQueryHandler(handle_callbacks)); app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-    print("Bot is running..."); app.run_polling()
+    get_proxy_manager()
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("addproxies", add_proxies_cmd))
+    app.add_handler(CallbackQueryHandler(handle_callbacks))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    print("Bot is running...")
+
+    # Render Web Service အတွက် Port binding error ကျော်ရန် ဟန်ပြ port ဖွင့်ခြင်း
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class HealthCheckHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+        def log_message(self, format, *args):
+            return
+
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    print(f"Dummy health check server started on port {port}")
+
+    app.run_polling()
+
 
 if __name__ == "__main__":
     try: main()
